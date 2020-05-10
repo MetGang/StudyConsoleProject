@@ -2,202 +2,195 @@
 
 namespace io
 {
+    bool IsKeyPressed(Key key)
+    {
+        return (GetAsyncKeyState(key) & 0x8000) != 0;
+    }
 
-bool IsKeyPressed(Key _Key)
-{
-    return (GetAsyncKeyState(_Key) & 0x8000) != 0;
-}
+    void SetCursorVisibility(bool flag)
+    {
+        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_CURSOR_INFO info;
+        GetConsoleCursorInfo(handle, &info);
+        info.bVisible = flag;
+        SetConsoleCursorInfo(handle, &info);
+    }
 
-void SetCursorVisibility(bool _Flag)
-{
-    HANDLE Hnd = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO Info;
-    GetConsoleCursorInfo(Hnd, &Info);
-    Info.bVisible = _Flag;
-    SetConsoleCursorInfo(Hnd, &Info);
-}
+    COORD GetConsoleSize()
+    {
+        CONSOLE_SCREEN_BUFFER_INFO info;
+        COORD size;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+        size.X = info.srWindow.Right - info.srWindow.Left + 1;
+        size.Y = info.srWindow.Bottom - info.srWindow.Top + 1;
+        return size;
+    }
 
-COORD GetConsoleSize()
-{
-    CONSOLE_SCREEN_BUFFER_INFO Info;
-    COORD Size;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &Info);
-    Size.X = Info.srWindow.Right - Info.srWindow.Left + 1;
-    Size.Y = Info.srWindow.Bottom - Info.srWindow.Top + 1;
-    return Size;
-}
+    void GotoXY(short x, short y)
+    {
+        COORD pos;
+        pos.X = x;
+        pos.Y = y;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    }
 
-void GotoXY(short _X, short _Y)
-{
-    COORD Pos;
-    Pos.X = _X;
-    Pos.Y = _Y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
-}
-
-void Cls()
-{
-    std::system("cls");
-}
-
+    void Cls()
+    {
+        std::system("cls");
+    }
 }
 
 namespace pro
 {
-
-void InputCode(char& _Code)
-{
-    std::cout << "\nPodaj znak do rysowania figury: ";
-    std::cin >> _Code;
-}
-
-void InputScale(int& _Scale, COORD _Pos, COORD _ConsoleSize)
-{
-    std::cout << "\nPodaj startowy rozmiar figury: ";
-
-    while(std::cin >> _Scale)
+    void InputCode(char& code)
     {
-        if(IsValidAction(_Scale, _Pos.X, _Pos.Y, _ConsoleSize)) break;
-
-        std::cout << "Podano nieodpowiedni rozmiar startowy, podaj ponownie: ";
-    }
-}
-
-void DrawShape(char _Code, int _Scale, int _PosX, int _PosY)
-{
-    int CopyX = _PosX;
-    int CopyY = _PosY;
-    _Scale *= 2;
-
-    io::Cls();
-
-    // Rysowanie lewego ramienia
-    io::GotoXY(CopyX, CopyY);
-    std::cout.put(_Code);
-    for(int i = 0; i < _Scale; ++i)
-    {
-        io::GotoXY(--CopyX, ++CopyY);
-        std::cout.put(_Code);
-    }
-    io::GotoXY(--CopyX, ++CopyY);
-    std::cout.put(_Code);
-    for(int i = 0; i < _Scale; ++i)
-    {
-        io::GotoXY(--CopyX, ++CopyY);
-        std::cout.put(_Code);
+        std::cout << "\nPodaj znak do rysowania figury: ";
+        std::cin >> code;
     }
 
-    CopyX = _PosX;
-    CopyY = _PosY;
-
-    // Rysowanie prawego ramienia
-    io::GotoXY(CopyX, CopyY);
-    for(int i = 0; i < _Scale; ++i)
+    void InputScale(int& scale, COORD pos, COORD consoleSize)
     {
-        io::GotoXY(++CopyX, ++CopyY);
-        std::cout.put(_Code);
-    }
-    io::GotoXY(++CopyX, ++CopyY);
-    std::cout.put(_Code);
-    for(int i = 0; i < _Scale; ++i)
-    {
-        io::GotoXY(++CopyX, ++CopyY);
-        std::cout.put(_Code);
-    }
+        std::cout << "\nPodaj startowy rozmiar figury: ";
 
-    // Rysowanie "poprzeczki" figury
-    CopyX = _PosX - _Scale;
-    CopyY = _PosY + _Scale + 1;
-
-    io::GotoXY(CopyX, CopyY);
-    for(int i = 0; i < _Scale * 2 + 1; ++i)
-    {
-        std::cout.put(_Code);
-    }
-}
-
-bool IsValidAction(int _Scale, short _X, short _Y, COORD _ConsoleSize)
-{
-    // Sprawdzenie czy figura nie wyjdzie poza granice ekranu
-    if(_Scale < 0) return false;
-
-    if(_Y >= 0 &&
-       _Y + (_Scale * 4 + 1) < _ConsoleSize.Y &&
-       _X - (_Scale * 4) > 0 &&
-       _X + (_Scale * 4 + 1) < _ConsoleSize.X) return true;
-
-    return false;
-}
-
-void PrintInfo()
-{
-    std::cout
-    << "Klawiszologia\n\n"
-    << "Strzalki : Poruszanie figury\n"
-    << "+        : Zwiekszenie rozmiaru figury\n"
-    << "-        : Zmniejszenie rozmiaru figury\n"
-    << "Escape   : Koniec programu\n";
-}
-
-void MainLoop(char _Code, int _Scale, COORD _Pos, COORD _ConsoleSize)
-{
-    while(true)
-    {
-        // Wyjście
-        if(io::IsKeyPressed(io::Escape)) break;
-
-        // Ruch
-        if(io::IsKeyPressed(io::Up))
+        while (std::cin >> scale)
         {
-            if(IsValidAction(_Scale, _Pos.X, _Pos.Y - 1, _ConsoleSize))
-            {
-                DrawShape(_Code, _Scale, _Pos.X, --_Pos.Y);
-            }
+            if (IsValidAction(scale, pos.X, pos.Y, consoleSize)) break;
+
+            std::cout << "Podano nieodpowiedni rozmiar startowy, podaj ponownie: ";
         }
-        else if(io::IsKeyPressed(io::Down))
+    }
+
+    void DrawShape(char code, int scale, int posX, int posY)
+    {
+        int copyX = posX;
+        int copyY = posY;
+        scale *= 2;
+
+        io::Cls();
+
+        // Rysowanie lewego ramienia
+        io::GotoXY(copyX, copyY);
+        std::cout.put(code);
+        for (int i = 0; i < scale; ++i)
         {
-            if(IsValidAction(_Scale, _Pos.X, _Pos.Y + 1, _ConsoleSize))
-            {
-                DrawShape(_Code, _Scale, _Pos.X, ++_Pos.Y);
-            }
+            io::GotoXY(--copyX, ++copyY);
+            std::cout.put(code);
         }
-        if(io::IsKeyPressed(io::Left))
+        io::GotoXY(--copyX, ++copyY);
+        std::cout.put(code);
+        for (int i = 0; i < scale; ++i)
         {
-            if(IsValidAction(_Scale, _Pos.X - 1, _Pos.Y, _ConsoleSize))
-            {
-                DrawShape(_Code, _Scale, --_Pos.X, _Pos.Y);
-            }
-        }
-        else if(io::IsKeyPressed(io::Right))
-        {
-            if(IsValidAction(_Scale, _Pos.X + 1, _Pos.Y, _ConsoleSize))
-            {
-                DrawShape(_Code, _Scale, ++_Pos.X, _Pos.Y);
-            }
+            io::GotoXY(--copyX, ++copyY);
+            std::cout.put(code);
         }
 
-        // Skalowanie
-        if(io::IsKeyPressed(io::Minus))
+        copyX = posX;
+        copyY = posY;
+
+        // Rysowanie prawego ramienia
+        io::GotoXY(copyX, copyY);
+        for (int i = 0; i < scale; ++i)
         {
-            if(_Scale > 1)
+            io::GotoXY(++copyX, ++copyY);
+            std::cout.put(code);
+        }
+        io::GotoXY(++copyX, ++copyY);
+        std::cout.put(code);
+        for (int i = 0; i < scale; ++i)
+        {
+            io::GotoXY(++copyX, ++copyY);
+            std::cout.put(code);
+        }
+
+        // Rysowanie "poprzeczki" figury
+        copyX = posX - scale;
+        copyY = posY + scale + 1;
+
+        io::GotoXY(copyX, copyY);
+        for (int i = 0; i < scale * 2 + 1; ++i)
+        {
+            std::cout.put(code);
+        }
+    }
+
+    bool IsValidAction(int scale, short x, short y, COORD consoleSize)
+    {
+        // Sprawdzenie czy figura nie wyjdzie poza granice ekranu
+        if (scale < 0) return false;
+
+        if (y >= 0 && y + (scale * 4 + 1) < consoleSize.Y && x - (scale * 4) > 0 && x + (scale * 4 + 1) < consoleSize.X) return true;
+
+        return false;
+    }
+
+    void PrintInfo()
+    {
+        std::cout
+        << "Klawiszologia\n\n"
+        << "Strzalki : Poruszanie figury\n"
+        << "+        : Zwiekszenie rozmiaru figury\n"
+        << "-        : Zmniejszenie rozmiaru figury\n"
+        << "Escape   : Koniec programu\n";
+    }
+
+    void MainLoop(char code, int scale, COORD pos, COORD consoleSize)
+    {
+        while (true)
+        {
+            // Wyjście
+            if (io::IsKeyPressed(io::Escape)) break;
+
+            // Ruch
+            if (io::IsKeyPressed(io::Up))
             {
-                if(IsValidAction(_Scale - 1, _Pos.X, _Pos.Y, _ConsoleSize))
+                if (IsValidAction(scale, pos.X, pos.Y - 1, consoleSize))
                 {
-                    DrawShape(_Code, --_Scale, _Pos.X, _Pos.Y);
+                    DrawShape(code, scale, pos.X, --pos.Y);
                 }
             }
-        }
-        else if(io::IsKeyPressed(io::Plus))
-        {
-            if(IsValidAction(_Scale + 1, _Pos.X, _Pos.Y, _ConsoleSize))
+            else if (io::IsKeyPressed(io::Down))
             {
-                DrawShape(_Code, ++_Scale, _Pos.X, _Pos.Y);
+                if (IsValidAction(scale, pos.X, pos.Y + 1, consoleSize))
+                {
+                    DrawShape(code, scale, pos.X, ++pos.Y);
+                }
             }
+            if (io::IsKeyPressed(io::Left))
+            {
+                if (IsValidAction(scale, pos.X - 1, pos.Y, consoleSize))
+                {
+                    DrawShape(code, scale, --pos.X, pos.Y);
+                }
+            }
+            else if (io::IsKeyPressed(io::Right))
+            {
+                if (IsValidAction(scale, pos.X + 1, pos.Y, consoleSize))
+                {
+                    DrawShape(code, scale, ++pos.X, pos.Y);
+                }
+            }
+
+            // Skalowanie
+            if (io::IsKeyPressed(io::Minus))
+            {
+                if (scale > 1)
+                {
+                    if (IsValidAction(scale - 1, pos.X, pos.Y, consoleSize))
+                    {
+                        DrawShape(code, --scale, pos.X, pos.Y);
+                    }
+                }
+            }
+            else if (io::IsKeyPressed(io::Plus))
+            {
+                if (IsValidAction(scale + 1, pos.X, pos.Y, consoleSize))
+                {
+                    DrawShape(code, ++scale, pos.X, pos.Y);
+                }
+            }
+
+            // Lekkie spowolnienie pętli żeby ograniczyć wykorzystanie procesora
+            Sleep(10);
         }
-
-        // Lekkie spowolnienie pętli żeby ograniczyć wykorzystanie procesora
-        Sleep(10);
     }
-}
-
 }

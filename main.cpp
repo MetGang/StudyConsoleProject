@@ -6,33 +6,31 @@ int main()
     io::Cls();
 
     // Deklaracja i przygotowanie zmiennych
-    char Code;
-    int Scale;
-    COORD ConsoleSize = io::GetConsoleSize();
-    COORD Pos;
-    Pos.X = ConsoleSize.X / 2;
-    Pos.Y = ConsoleSize.Y / 2;
+    char code;
+    int scale;
+    COORD consoleSize = io::GetConsoleSize();
+    COORD pos = { static_cast<short>(consoleSize.X / 2), static_cast<short>(consoleSize.Y / 2) };
 
     // Instrukcja
     pro::PrintInfo();
 
     // Wprowadzenie znaku ASCII do rysowania figury
-    pro::InputCode(Code);
+    pro::InputCode(code);
 
     // Wprowadzenie początkowego rozmiaru figury
-    pro::InputScale(Scale, Pos, ConsoleSize);
+    pro::InputScale(scale, pos, consoleSize);
 
     // Schowanie kursora
     io::SetCursorVisibility(false);
 
     // Ustawianie pozycji startowej
-    io::GotoXY(Pos.X, Pos.Y);
+    io::GotoXY(pos.X, pos.Y);
 
     // Początkowe narysowanie figury
-    pro::DrawShape(Code, Scale, Pos.X, Pos.Y);
+    pro::DrawShape(code, scale, pos.X, pos.Y);
 
     // Pętla główna
-    pro::MainLoop(Code, Scale, Pos, ConsoleSize);
+    pro::MainLoop(code, scale, pos, consoleSize);
 
     return 0;
 }
